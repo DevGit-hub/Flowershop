@@ -10,6 +10,17 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
 
+    # Add MySQL service
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: flower_shop
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
     steps:
       # Step 1: Checkout code
       - name: Checkout code
@@ -23,15 +34,22 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
-      # Step 3: Set up Chrome for Selenium tests
-      - name: Set up Chrome
-        uses: browser-actions/setup-chrome@v1
-        with:
-          chrome-version: stable
+      # Step 3: Wait for MySQL to be ready
+      - name: Wait for MySQL
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mysql-client
+          while ! mysqladmin ping -h"127.0.0.1" -P3306 -uroot -proot --silent; do
+            sleep 1
+          done
 
-      # Step 4: Build and run ALL tests (including Selenium)
+      # Step 4: Build and run tests
       - name: Build and run tests
         run: mvn clean test
+        env:
+          SPRING_DATASOURCE_URL: jdbc:mysql://127.0.0.1:3306/flower_shop
+          SPRING_DATASOURCE_USERNAME: root
+          SPRING_DATASOURCE_PASSWORD: root
 
       # Step 5: Build package
       - name: Build package
