@@ -23,15 +23,21 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
-      # Step 3: Build and run tests
+      # Step 3: Set up Chrome for Selenium tests
+      - name: Set up Chrome
+        uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: stable
+
+      # Step 4: Build and run ALL tests (including Selenium)
       - name: Build and run tests
         run: mvn clean test
 
-      # Step 4: Build package (optional)
+      # Step 5: Build package
       - name: Build package
         run: mvn clean package -DskipTests
 
-      # Step 5: Upload test results (optional)
+      # Step 6: Upload test results
       - name: Upload test results
         uses: actions/upload-artifact@v4
         with:
